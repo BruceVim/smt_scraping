@@ -47,7 +47,7 @@ class CrawlerApp {
             // $ball_blue = $driver -> findElement(
             //     WebDriverBy::className('ball_blue')
             // );
-    
+
             $smt_info = [];
 
             #获取标题
@@ -71,6 +71,17 @@ class CrawlerApp {
 
     }
 
+    public function findElementExsit( $obj )
+    {
+        if( $this -> isElementExsit($driver, $obj)){
+            return true;
+        } else {
+            $js="var q=document.documentElement.scrollTop=".(1000);
+            $sScriptResult = $driver -> executeScript( $js, array() );
+
+            $this -> findElementExsit($obj);
+        }
+    }
 
 
     public function RunApp() {
