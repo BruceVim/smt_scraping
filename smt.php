@@ -47,14 +47,25 @@ class CrawlerApp {
             // $ball_blue = $driver -> findElement(
             //     WebDriverBy::className('ball_blue')
             // );
+    
             $smt_info = [];
 
             #获取标题
             $_title = $driver -> findElements(
                 WebDriverBy::className('product-title')
             );
-            $smt_info['product_title']$_title[0] -> getText();
+            $smt_info['product_title'] = $_title[0] -> getText();
             unset( $_title );
+
+            $_description = $driver -> findElements(
+                WebDriverBy::className('product-description')
+            );
+
+            if ( $this ->findElementExsit($_description) ) {
+                var_dump($_description);
+                var_dump($_description[0]);
+                var_dump($_description[0]  -> getText() );
+            }
 
             
 
