@@ -145,7 +145,8 @@ class CrawlerApp {
                             $img_index = strpos($img_str,'jpg');
                             $img_str = substr($img_str, 0, $img_index +3 );
 
-                            $smt_info['product_attr'][ $product_attr_1_name ][ $img_title ] = $img_str;
+                            $smt_info['product_attr'][ $product_attr_1_name ]['data'][ $img_title ] = $img_str;
+                            $smt_info['product_attr'][ $product_attr_1_name ]['type'] = 'img';
                         }
                     }
                     if ( !empty($_attr_span) )
@@ -154,7 +155,8 @@ class CrawlerApp {
                         {
                             $span_str = $_span -> getAttribute('innerHTML');
 
-                            $smt_info['product_attr'][ $product_attr_1_name ][] = $span_str;
+                            $smt_info['product_attr'][ $product_attr_1_name ]['data'][] = $span_str;
+                            $smt_info['product_attr'][ $product_attr_1_name ]['type'] = 'span';
                         }
                     }
 
@@ -163,9 +165,31 @@ class CrawlerApp {
             }
 
             #获取属性价格
+            print_r($smt_info['product_attr']);
             if ( !empty($smt_info['product_attr']) )
             {
                 $dept = count($smt_info['product_attr']);
+
+                $dept_1 = array_slice($smt_info['product_attr'],0,1);
+                foreach ( $dept_1['data'] as $k1 => $v1 )
+                {
+
+                    if ( 'img' == $dept_1['type'] )
+                    {
+                        $_product_attr -> findElements(
+                            WebDriverBy::xpath("./ul[@class='sku-property-list']//img[@title='{$k1}']")
+                        ) -> click();
+                    }
+                    if ( 'span' == $dept_1['type'] )
+                    {
+                        $_product_attr -> findElements(
+                            WebDriverBy::xpath("./ul[@class='sku-property-list']//span[text()='{$k1}']")
+                        ) -> click();
+                    }
+
+
+                }
+
 
                 for ( $i = 0; $i < $dept ; $i ++ )
                 {
@@ -178,6 +202,39 @@ class CrawlerApp {
 
 
             return;
+    }
+
+    public function clickElement( $product_attr , $_product_attr_driver_obj, $cur_dept = 0 )
+    {
+        $dept = count($product_attr);
+
+        $attr_arr = array_slice($product_attr,$cur_dept,1);
+        foreach ( $attr_arr['data'] as $k1 => $v1 )
+        {
+
+            if ( 'img' == $attr_arr['type'] )
+            {
+                $_product_attr_driver_obj -> findElements(
+                    WebDriverBy::xpath("./ul[@class='sku-property-list']//img[@title='{$k1}']")
+                ) -> click();
+            }
+            if ( 'span' == $attr_arr['type'] )
+            {
+                $_product_attr_driver_obj -> findElements(
+                    WebDriverBy::xpath("./ul[@class='sku-property-list']//span[text()='{$k1}']")
+                ) -> click();
+            }
+
+            $cur_dept ++ ;
+            if ( $dept > $cur_dept )
+            {
+                $this -> clickElement( $attr_arr , $_product_attr_driver_obj , $cur_dept);
+            } else {
+
+            }
+
+
+        }
     }
 
     public function findElementExsit( $driver, $obj )
