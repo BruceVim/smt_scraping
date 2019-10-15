@@ -27,6 +27,11 @@ class CrawlerApp {
 
     public $dataArr = [];
     public $index = 1;
+
+    public $attr = [
+        'has_img' => 0,
+        'has_span' => 0,
+        ];
     /*	private $MysqlHost = 'localhost';
         private $MysqlUser = 'root';
         private $MysqlPasswd = '';
@@ -34,43 +39,45 @@ class CrawlerApp {
 
     public $MysqlConn;
 
-    public function Crawler( $driver ) {
+    public $driver;
+
+    public $smt_info;
+
+    public function Crawler() {
 
             $targetUrl = 'https://www.aliexpress.com/item/4000156718164.html';
-            $driver->get( $targetUrl );
+            $this -> driver -> get( $targetUrl );
 
             #获取多个元素
-            // $ball_red = $driver -> findElements(
+            // $ball_red = $this -> driver -> findElements(
             //     WebDriverBy::className('ball_red')
             // );
             // #获取单个元素
-            // $ball_blue = $driver -> findElement(
+            // $ball_blue = $this -> driver -> findElement(
             //     WebDriverBy::className('ball_blue')
             // );
 
-            $smt_info = [];
-
             #获取标题
-            $_title = $driver -> findElements(
+            $_title = $this -> driver -> findElements(
                 WebDriverBy::className('product-title')
             );
             $_title_str = $_title[0] -> getText();
             if( strlen($_title_str) > 0 )
             {
-                $smt_info['product_title'] = $_title[0] -> getText();
+                $this -> smt_info['product_title'] = $_title[0] -> getText();
             }
             unset( $_title );
 
             #获取描述
             $localtion = WebDriverBy::className('product-description');
-            if ( $this ->findElementExsit($driver, $localtion) ) {
-                $_description = $driver -> findElements(
+            if ( $this ->findElementExsit( $localtion) ) {
+                $_description = $this -> driver -> findElements(
                     $localtion
                 );
                 $_description_str = $_description[0] -> getAttribute('innerHTML');
                 if( strlen($_description_str) > 0 )
                 {
-                    $smt_info['product_description'] = addslashes($_description[0] -> getAttribute('innerHTML'));
+                    $this -> smt_info['product_description'] = addslashes($_description[0] -> getAttribute('innerHTML'));
                 }
 
             }
@@ -78,44 +85,44 @@ class CrawlerApp {
             unset($_description);
 
             #获取价格区间
-            $_price_range = $driver -> findElements(
+            $_price_range = $this -> driver -> findElements(
                 WebDriverBy::className('product-price-value')
             );
-            $smt_info['product_msrp'] = $_price_range[0] -> getAttribute('innerHTML');
-            $price_range_arr = explode(' ', $smt_info['product_msrp']);
-            $smt_info['product_msrp_min'] = str_replace('$', '', $price_range_arr[1]);
-            $smt_info['product_msrp_max'] = $price_range_arr[3];
+            $this -> smt_info['product_msrp'] = $_price_range[0] -> getAttribute('innerHTML');
+            $price_range_arr = explode(' ', $this -> smt_info['product_msrp']);
+            $this -> smt_info['product_msrp_min'] = str_replace('$', '', $price_range_arr[1]);
+            $this -> smt_info['product_msrp_max'] = $price_range_arr[3];
 
-            $smt_info['product_cost_price'] = $_price_range[1] -> getAttribute('innerHTML');
-            $price_range_arr = explode(' ', $smt_info['product_cost_price']);
-            $smt_info['product_cost_min'] = str_replace('$', '', $price_range_arr[1]);
-            $smt_info['product_cost_max'] = $price_range_arr[3];
+            $this -> smt_info['product_cost_price'] = $_price_range[1] -> getAttribute('innerHTML');
+            $price_range_arr = explode(' ', $this -> smt_info['product_cost_price']);
+            $this -> smt_info['product_cost_min'] = str_replace('$', '', $price_range_arr[1]);
+            $this -> smt_info['product_cost_max'] = $price_range_arr[3];
             unset( $_price_range );
 
             #获取库存
-            $_product_stock = $driver -> findElements(
+            $_product_stock = $this -> driver -> findElements(
                 WebDriverBy::className('product-quantity-tip')
             );
             $_product_stock_str = $_product_stock[0] -> getAttribute('innerHTML');
             if ( strlen($_product_stock_str) > 0 )
             {
                 preg_match_all('/\d+/',$_product_stock_str,$arr);
-                $smt_info['product_stock'] = $arr[0];
+                $this -> smt_info['product_stock'] = $arr[0];
             }
             unset( $_product_stock );
             unset( $_product_stock_str );
 
             #到货时间
-            $_product_shipping_date = $driver -> findElements(
+            $_product_shipping_date = $this -> driver -> findElements(
                 WebDriverBy::xpath('//span[@class=\'product-shipping-date\']/span[@class="product-shipping-delivery"]/span')
             );
             $_product_shipping_date_str = $_product_shipping_date[0] -> getAttribute('innerHTML');
-            $smt_info['product_stock'] = strlen($_product_shipping_date_str) > 0 ? $_product_shipping_date_str : '';
+            $this -> smt_info['product_stock'] = strlen($_product_shipping_date_str) > 0 ? $_product_shipping_date_str : '';
             unset( $_product_shipping_date_str );
             unset( $_product_shipping_date );
 
             #属性获取
-            $_product_attr = $driver -> findElements(
+            $_product_attr = $this -> driver -> findElements(
                 WebDriverBy::xpath('//div[@class=\'product-sku\']/div[@class="sku-wrap"]/div[@class="sku-property"]')
             );
 
@@ -145,8 +152,9 @@ class CrawlerApp {
                             $img_index = strpos($img_str,'jpg');
                             $img_str = substr($img_str, 0, $img_index +3 );
 
-                            $smt_info['product_attr'][ $product_attr_1_name ]['data'][ $img_title ] = $img_str;
-                            $smt_info['product_attr'][ $product_attr_1_name ]['type'] = 'img';
+                            $this -> smt_info['product_attr'][ $product_attr_1_name ]['data'][ $img_title ] = $img_str;
+                            $this -> smt_info['product_attr'][ $product_attr_1_name ]['type'] = 'img';
+                            $this -> attr['has_img'] = 1;
                         }
                     }
                     if ( !empty($_attr_span) )
@@ -155,109 +163,153 @@ class CrawlerApp {
                         {
                             $span_str = $_span -> getAttribute('innerHTML');
 
-                            $smt_info['product_attr'][ $product_attr_1_name ]['data'][] = $span_str;
-                            $smt_info['product_attr'][ $product_attr_1_name ]['type'] = 'span';
+                            $this -> smt_info['product_attr'][ $product_attr_1_name ]['data'][] = $span_str;
+                            $this -> smt_info['product_attr'][ $product_attr_1_name ]['type'] = 'span';
+
+                            $this -> attr['has_span'] = 1;
                         }
                     }
 
                     unset($product_attr_1_name);
                 }
             }
-
+ 
+            #关闭弹窗  尝试2次
+            $this -> close_pop_div(3);
+            
+            sleep(1);
+    
             #获取属性价格
-            print_r($smt_info['product_attr']);
-            if ( !empty($smt_info['product_attr']) )
-            {
-                $dept = count($smt_info['product_attr']);
-
-                $dept_1 = array_slice($smt_info['product_attr'],0,1);
-                foreach ( $dept_1['data'] as $k1 => $v1 )
-                {
-
-                    if ( 'img' == $dept_1['type'] )
-                    {
-                        $_product_attr -> findElements(
-                            WebDriverBy::xpath("./ul[@class='sku-property-list']//img[@title='{$k1}']")
-                        ) -> click();
-                    }
-                    if ( 'span' == $dept_1['type'] )
-                    {
-                        $_product_attr -> findElements(
-                            WebDriverBy::xpath("./ul[@class='sku-property-list']//span[text()='{$k1}']")
-                        ) -> click();
-                    }
+            $this -> clickElementAndScrap($this -> smt_info['product_attr'], $_product_attr, 0);
 
 
-                }
-
-
-                for ( $i = 0; $i < $dept ; $i ++ )
-                {
-
-
-                }
-                var_dump( $dept );
-            }
-
-
-
+            var_dump( $this -> smt_info );
             return;
     }
 
-    public function clickElement( $product_attr , $_product_attr_driver_obj, $cur_dept = 0 )
+    public function close_pop_div( $nc = 3 )
+    {
+         $fuk_div_localtion = WebDriverBy::xpath("//div[@class='next-overlay-wrapper opened']");
+            
+            if ( $this -> findElementExsit( $fuk_div_localtion ) ) {
+            
+                $this -> driver -> findElement( 
+                    WebDriverBy::xpath("//div[@class='next-overlay-wrapper opened']//a[@class='next-dialog-close']")
+                )-> click();
+
+                $nc = 0;
+            }
+
+        if ( $nc > 0 ) {
+          return   $this -> close_pop_div( $nc-- );
+        }
+
+        return;
+    }
+
+
+    public function clickElementAndScrap( $product_attr , $_product_attr_driver_obj, $cur_dept = 0 )
     {
         $dept = count($product_attr);
-
-        $attr_arr = array_slice($product_attr,$cur_dept,1);
+        $attr_arr = current(array_slice($product_attr,$cur_dept,1));
+        $index = 0;
+        
         foreach ( $attr_arr['data'] as $k1 => $v1 )
         {
 
             if ( 'img' == $attr_arr['type'] )
             {
-                $_product_attr_driver_obj -> findElements(
-                    WebDriverBy::xpath("./ul[@class='sku-property-list']//img[@title='{$k1}']")
-                ) -> click();
+
+                $img_ele = $_product_attr_driver_obj[$cur_dept] -> findElement(
+                    WebDriverBy::xpath("./ul[@class='sku-property-list']//img[@title='". $k1 ."']")
+                );
+
+                $this -> driver->executeScript("arguments[0].scrollIntoView({block: \"center\"});",[$img_ele]);
+                $img_ele -> click();
+
             }
             if ( 'span' == $attr_arr['type'] )
             {
-                $_product_attr_driver_obj -> findElements(
-                    WebDriverBy::xpath("./ul[@class='sku-property-list']//span[text()='{$k1}']")
+                $span_ele = $_product_attr_driver_obj[$cur_dept] -> findElement(
+                    WebDriverBy::xpath("./ul[@class='sku-property-list']//span[text()='". $v1 ."']")
                 ) -> click();
+
+                $this -> driver->executeScript("arguments[0].scrollIntoView({block: \"center\"});",[$span_ele]);
+                
+                $span_ele -> click();
             }
 
-            $cur_dept ++ ;
-            if ( $dept > $cur_dept )
+            $cur_dept_tmp = $cur_dept + 1 ;
+            
+            if ( $dept > $cur_dept_tmp )
             {
-                $this -> clickElement( $attr_arr , $_product_attr_driver_obj , $cur_dept);
-            } else {
-
+                $this -> clickElementAndScrap( $product_attr , $_product_attr_driver_obj , $cur_dept_tmp, $index );
             }
 
+            if ( $dept == $cur_dept_tmp ) {
+
+                #获取名字
+                unset($_product_attr);
+                $_product_attr = $this -> driver -> findElements(
+                    WebDriverBy::xpath('//div[@class=\'product-sku\']/div[@class="sku-wrap"]//div[@class="sku-property"]//li[@class="sku-property-item selected"]')
+                );
+
+                if ( !empty($_product_attr) ) {
+                    foreach ($_product_attr as $key => $value) {
+                        $value -> findElement(
+                            WebDriverBy::xpath("./ul[@class='sku-property-list']//img")
+                    );
+                    }
+                }
+
+                 #获取库存
+                $_product_stock = $this -> driver -> findElements(
+                    WebDriverBy::className('product-quantity-tip')
+                );
+                $_product_stock_str = $_product_stock[0] -> getAttribute('innerHTML');
+                $this -> smt_info['sku'][ $index ]['stock'] = $_product_stock_str;
+
+                #获取价格区间
+                $product_price = $this -> driver -> findElements(
+                    WebDriverBy::className('product-price-value')
+                );
+                $product_price_str = $product_price[0] -> getAttribute('innerHTML');
+                $this -> smt_info['sku'][ $index ]['price'] = $product_price_str;
+
+                unset( $product_price );
+                unset( $product_price_str );
+                unset( $_product_stock );
+                unset( $_product_stock_str );
+
+                $index ++ ;
+            }
+
+            
 
         }
     }
 
-    public function findElementExsit( $driver, $obj )
+    public function findElementExsit( $obj )
     {
-        if( $this -> isElementExsit($driver, $obj) ){
+        if( $this -> isElementExsit($obj) ){
             return true;
         } else {
 
             $js="var q=document.documentElement.scrollTop=".(1000);
-            $sScriptResult = $driver -> executeScript( $js, array() );
+            $sScriptResult = $this -> driver -> executeScript( $js, array() );
 
-            return $this -> findElementExsit($driver, $obj);
+            return $this -> findElementExsit( $obj );
         }
     }
 
     /**
      * 判断元素是否存在
-     * @param WebDriver $driver
+     * @param WebDriver $this -> driver
      * @param WebDriverBy $locator
      */
-    function isElementExsit($driver,$locator){
+    function isElementExsit($locator){
         try {
-            $nextbtn = $driver->findElement($locator);
+            $nextbtn = $this -> driver->findElement($locator);
             return true;
         } catch (\Exception $e) {
             //echo 'element is not found!';
@@ -334,20 +386,21 @@ class CrawlerApp {
 
         
 
-        $driver = RemoteWebDriver::create($host, DesiredCapabilities::chrome(), 50000);
+        $this -> driver = RemoteWebDriver::create($host, DesiredCapabilities::chrome(), 50000);
 
-        $this -> Crawler( $driver );
+        $this -> smt_info = [];
+        $this -> Crawler();
 
       
 
 
-        // echo "The title is '" . $driver->getTitle() . "'\n";
-        // echo "The current URI is '" . $driver->getCurrentURL() . "'\n";
+        // echo "The title is '" . $this -> driver->getTitle() . "'\n";
+        // echo "The current URI is '" . $this -> driver->getCurrentURL() . "'\n";
 
 
 
         //关闭浏览器
-        $driver->quit();
+        $this -> driver->quit();
 
     }
 
