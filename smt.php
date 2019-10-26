@@ -212,11 +212,10 @@ class CrawlerApp {
     }
 
 
-    public function clickElementAndScrap( $product_attr , $_product_attr_driver_obj, $cur_dept = 0, $sku_name=[] )
+    public function clickElementAndScrap( $product_attr , $_product_attr_driver_obj, $cur_dept = 0, $sku_name=[] , $img_url='')
     {
         $dept = count($product_attr);
         $attr_arr = current(array_slice($product_attr,$cur_dept,1));
-
         foreach ( $attr_arr['data'] as $k1 => $v1 )
         {
 
@@ -232,6 +231,12 @@ class CrawlerApp {
 
                 $_sku_name = $k1;
 
+                $img_str = $img_ele -> getAttribute('src');
+                $img_index = strpos($img_str,'jpg');
+                $img_str = substr($img_str, 0, $img_index +3 );
+                 $img_url = '';
+                $img_url = $img_str;
+        
             }
             if ( 'span' == $attr_arr['type'] )
             {
@@ -252,7 +257,7 @@ class CrawlerApp {
            //数组深度
             if ( $dept > ($cur_dept + 1) ) 
             {
-                $this -> clickElementAndScrap( $product_attr , $_product_attr_driver_obj , ($cur_dept + 1), $sku_name);
+                $this -> clickElementAndScrap( $product_attr , $_product_attr_driver_obj , ($cur_dept + 1), $sku_name, $img_url);
             } 
             elseif( $dept == ($cur_dept + 1) ) 
             {
@@ -281,6 +286,8 @@ class CrawlerApp {
                     $price_range_arr = explode(' ', $product_price_str);
                     $sku_attr_tmp['price'] = str_replace('$', '', $price_range_arr[1]);
                 }
+                #添加图片
+                $sku_attr_tmp['img_url'] =  $img_url;
 
                 $this -> smt_info['sku'][] = $sku_attr_tmp;
                 unset( $sku_attr_tmp );
@@ -471,10 +478,10 @@ class CrawlerApp {
 
         if ( !empty($smt_info['sku']) ) {
         foreach ($smt_info['sku']  as $key => $value) {
-            
-            $siv_inner_sql = "INSERT INTO `test`.`v1_smt_item_variations` (  `siv_si_id`, `siv_sku_name`, `siv_sku_stock`, `siv_sku_price`,  `siv_create_at` )
+        
+            $siv_inner_sql = "INSERT INTO `test`.`v1_smt_item_variations` (  `siv_si_id`, `siv_sku_name`, `siv_sku_stock`, `siv_sku_price`, `siv_sku_img` , `siv_create_at` )
                 VALUES
-                    (  {$si_id}, '{$value['sku_name']}', '{$value['stock']}', '{$value['price']}', '{$time}' );";
+                    (  {$si_id}, '{$value['sku_name']}', '{$value['stock']}', '{$value['price']}','{$value['img_url']}', '{$time}' );";
 
             $res = mysqli_query($this -> MysqlConn,$siv_inner_sql);
         }
